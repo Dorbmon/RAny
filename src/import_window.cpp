@@ -1,9 +1,9 @@
 #include "import_window.h"
-#include "gtkmm/dialog.h"
 #include "gtkmm/enums.h"
-#include "gtkmm/filechoosernative.h"
-#include <iostream>
-ImportWindow::ImportWindow() {
+#include "gtkmm/filedialog.h"
+ImportWindow::ImportWindow(): ImportWindow(nullptr) {}
+
+ImportWindow::ImportWindow(std::function<void(std::optional<std::string>)> on_finish): on_finish(on_finish) {
     set_title("Import Your Audio File");
     set_default_size(250, 250);
     this->vbox.set_orientation(Gtk::Orientation::VERTICAL);
@@ -21,16 +21,13 @@ ImportWindow::ImportWindow() {
     set_child(this->vbox);
 }
 void ImportWindow::on_choose_file_button_clicked() {
-    auto dialog = Gtk::FileChooserNative::create("Please choose the audio file", 
-                                   Gtk::FileChooser::Action::OPEN,
-                                   "Choose",
-                                   "Cancel");
-    dialog->signal_response().connect([=, this](int v) {
-        if (v == Gtk::ResponseType::ACCEPT) {
-            std::cout << dialog->get_file()->get_parse_name() << std::endl;
-            this->selected_file.set_text(dialog->get_file()->get_parse_name());
+    auto dialog = Gtk::FileDialog::create();
+    dialog->set_title("Please choose your audio file");
+    dialog->set_accept_label("Select");
+    dialog->open([dialog] (const Glib::RefPtr<Gio::AsyncResult> &result) {
+        auto file = dialog->save_finish(result);
+        if(file != nullptr) {
+            file->get_uri();
         }
-        
     });
-    dialog->show();
 }
